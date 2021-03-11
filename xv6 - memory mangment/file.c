@@ -139,11 +139,14 @@ filewrite(struct file *f, char *addr, int n)
 
       begin_op();
       ilock(f->ip);
+      // cprintf("no deadlock up to here 142\n");
       if ((r = writei(f->ip, addr + i, f->off, n1)) > 0)
         f->off += r;
+      // cprintf("no deadlock up to here 145\n");
       iunlock(f->ip);
+      // cprintf("no deadlock up to here 147\n");
       end_op();
-
+      // cprintf("no deadlock up to here 149\n");
       if(r < 0)
         break;
       if(r != n1)

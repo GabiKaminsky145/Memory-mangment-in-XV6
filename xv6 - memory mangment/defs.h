@@ -52,6 +52,16 @@ struct inode*   nameiparent(char*, char*);
 int             readi(struct inode*, char*, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
+int				createSwapFile(struct proc* p);
+int				readFromSwapFile(struct proc * p, char* buffer, uint placeOnFile, uint size);
+int				writeToSwapFile(struct proc* p, char* buffer, uint placeOnFile, uint size);
+int				removeSwapFile(struct proc* p);
+
+
+// sysfile
+struct inode*	create(char *path, short type, short major, short minor);
+int				isdirempty(struct inode *dp);
+
 
 // ide.c
 void            ideinit(void);
@@ -66,8 +76,11 @@ void            ioapicinit(void);
 // kalloc.c
 char*           kalloc(void);
 void            kfree(char*);
+void            kfree(char*);
 void            kinit1(void*, void*);
 void            kinit2(void*, void*);
+uint            getTotalNumOfFreePages();
+uint            getCurrentNumOfFreePages();
 
 // kbd.c
 void            kbdintr(void);
@@ -107,19 +120,23 @@ int             cpuid(void);
 void            exit(void);
 int             fork(void);
 int             growproc(int);
-int             kill(int, int);
+int             kill(int);
 struct cpu*     mycpu(void);
 struct proc*    myproc();
 void            pinit(void);
 void            procdump(void);
 void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
-void            setproc(struct proc*);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+void            inc(struct proc * p,char* v);
+void            dec(struct proc * p,char* v);
+int             getRef(struct proc * p,char* v);
+struct page*    findPage(struct proc * p, char* v);
+void            NFU_update();
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -181,10 +198,16 @@ void            freevm(pde_t*);
 void            inituvm(pde_t*, char*, uint);
 int             loaduvm(pde_t*, char*, struct inode*, uint, uint);
 pde_t*          copyuvm(pde_t*, uint);
+pde_t*          cowuvm(pde_t *pgdir, uint sz);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
+pte_t *         walkpgdir(pde_t *pgdir, const void *va, int alloc);  ///we add this for using in trap.c
+void            pageOut(struct proc* p);
+int             mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
+void            pageFault();
+
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

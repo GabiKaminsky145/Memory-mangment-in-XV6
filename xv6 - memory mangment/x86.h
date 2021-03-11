@@ -1,23 +1,5 @@
 // Routines to let C code use special x86 instructions.
 
-// cas:
-//compare addr and expected. if they are the same, do addr = new. if not, addr remains the same
-
-
-static inline int CAS(volatile void *addr, int expected, int newVal){
-    unsigned char ret;
-    int* addr_ = (int*)addr;
-    asm volatile(
-            "  lock\n"
-            "  cmpxchgl %[newval], %[mem]\n"
-            "  sete %0\n"
-            : "=q" (ret), [mem] "+m" (*addr_), "+a" (expected)
-            : [newval]"r" (newVal)
-            : "memory");    
-    return ret;   
-}
-
-
 static inline uchar
 inb(ushort port)
 {

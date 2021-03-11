@@ -17,8 +17,19 @@ exec(char *path, char **argv)
   struct inode *ip;
   struct proghdr ph;
   pde_t *pgdir, *oldpgdir;
-  struct proc *curproc = myproc();
- 
+  struct proc * curproc = myproc();
+  if(curproc->pid > 2){
+    for (int i = 0; i < curproc->physical_num_of_pages; i++){  // hen and the painter
+      curproc->ram_queue[i].va = 0;
+    }
+    curproc->physical_num_of_pages = 0;       
+    curproc->phy_index = 0;
+    curproc->current_num_of_pages = 0;
+    curproc->out_index =  0;
+    curproc->swapMetaCounter = 0;
+    // removeSwapFile(curproc);  // do we need this too?
+  }
+
   begin_op();
 
   if((ip = namei(path)) == 0){
@@ -100,17 +111,8 @@ exec(char *path, char **argv)
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   switchuvm(curproc);
-  
- //sh.c is a user programm, so we must use myproc() here in order to change back to default handlers
-  for (int i=0; i < 32; i++){
-      if (!((uint)curproc->actions[i]->sa_handler == SIG_IGN))
-        curproc->actions[i]->sa_handler = SIG_DFL;
-    }
-
-  
   freevm(oldpgdir);
   return 0;
-
  bad:
   if(pgdir)
     freevm(pgdir);

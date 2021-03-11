@@ -4,8 +4,6 @@
 #include "user.h"
 #include "fcntl.h"
 
-
-
 // Parsed command representation
 #define EXEC  1
 #define REDIR 2
@@ -76,7 +74,7 @@ runcmd(struct cmd *cmd)
   case EXEC:
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
-      exit();    
+      exit();
     exec(ecmd->argv[0], ecmd->argv);
     printf(2, "exec %s failed\n", ecmd->argv[0]);
     break;

@@ -23,6 +23,10 @@ struct {
   struct run *freelist;
 } kmem;
 
+uint totalNumOfFreePages;
+uint currentNumOfFreePages;
+
+
 // Initialization happens in two phases.
 // 1. main() calls kinit1() while still using entrypgdir to place just
 // the pages mapped by entrypgdir on free list.
@@ -31,6 +35,8 @@ struct {
 void
 kinit1(void *vstart, void *vend)
 {
+  totalNumOfFreePages = (vend - vstart) / PGSIZE;
+  currentNumOfFreePages = 0;
   initlock(&kmem.lock, "kmem");
   kmem.use_lock = 0;
   freerange(vstart, vend);
@@ -40,6 +46,7 @@ void
 kinit2(void *vstart, void *vend)
 {
   freerange(vstart, vend);
+  totalNumOfFreePages += (vend - vstart) / PGSIZE;
   kmem.use_lock = 1;
 }
 
@@ -49,7 +56,7 @@ freerange(void *vstart, void *vend)
   char *p;
   p = (char*)PGROUNDUP((uint)vstart);
   for(; p + PGSIZE <= (char*)vend; p += PGSIZE)
-    kfree(p);
+    kfree(p); 
 }
 //PAGEBREAK: 21
 // Free the page of physical memory pointed at by v,
@@ -59,22 +66,23 @@ freerange(void *vstart, void *vend)
 void
 kfree(char *v)
 {
+  currentNumOfFreePages++;
   struct run *r;
-
-  if((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP)
+  if((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP){
+    cprintf("kfree about to panic. v % pgsize: %d, v: %x, end: %x v2p(v): %x, phystop: %x\n",(uint)v % PGSIZE, v, end, V2P(v),PHYSTOP);
     panic("kfree");
-
-  // Fill with junk to catch dangling refs.
-  memset(v, 1, PGSIZE);
-
+  }
   if(kmem.use_lock)
     acquire(&kmem.lock);
   r = (struct run*)v;
+  // Fill with junk to catch dangling refs.
+  memset(v, 1, PGSIZE);
   r->next = kmem.freelist;
   kmem.freelist = r;
   if(kmem.use_lock)
     release(&kmem.lock);
 }
+
 
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
@@ -82,15 +90,23 @@ kfree(char *v)
 char*
 kalloc(void)
 {
+  currentNumOfFreePages--;
   struct run *r;
-
   if(kmem.use_lock)
     acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r){
     kmem.freelist = r->next;
+  }
   if(kmem.use_lock)
     release(&kmem.lock);
   return (char*)r;
 }
 
+uint getCurrentNumOfFreePages(){
+  return currentNumOfFreePages;
+}
+
+uint getTotalNumOfFreePages(){
+  return totalNumOfFreePages;
+}

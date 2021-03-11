@@ -73,7 +73,7 @@ struct segdesc {
 // page directory index
 #define PDX(va)         (((uint)(va) >> PDXSHIFT) & 0x3FF)
 
-// page table index
+// page table index  
 #define PTX(va)         (((uint)(va) >> PTXSHIFT) & 0x3FF)
 
 // construct virtual address from indexes and offset
@@ -94,7 +94,10 @@ struct segdesc {
 #define PTE_P           0x001   // Present
 #define PTE_W           0x002   // Writeable
 #define PTE_U           0x004   // User
+#define PTE_A           0x008   // refrenced
 #define PTE_PS          0x080   // Page Size
+#define PTE_PG          0x200   // Paged out to secondary storage
+#define PTE_COW         0x800   // flag that indicate if cowuvm occours
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((uint)(pte) & ~0xFFF)
